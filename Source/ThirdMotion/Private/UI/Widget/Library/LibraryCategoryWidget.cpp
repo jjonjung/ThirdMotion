@@ -1,0 +1,114 @@
+
+#include "UI/Widget/Library/LibraryCategoryWidget.h"
+
+#include "Blueprint/WidgetTree.h"
+#include "Components/HorizontalBox.h"
+#include "Components/TextBlock.h"
+#include "UI/Widget/Library/CategoryButton.h"
+
+void ULibraryCategoryWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	SetFromTag(FGameplayTag::RequestGameplayTag(FName("Library")));
+}
+
+void ULibraryCategoryWidget::SetController(ULibraryWidgetController* InController)
+{
+	if (!InController) return;
+	Controller = InController;
+}
+
+void ULibraryCategoryWidget::SetFromTag(FGameplayTag InTag)
+{
+	CurrentTag = InTag;
+	Rebuild();
+}
+
+void ULibraryCategoryWidget::SetFromParts(const TArray<FString>& Parts)
+{
+	// Parts -> FGameplayTag
+	FString Joined;
+	for (int32 i=0; i<Parts.Num(); ++i)
+	{
+		if (i > 0) { Joined += TEXT("."); }
+		Joined += Parts[i];
+	}
+	CurrentTag = FGameplayTag::RequestGameplayTag(FName(*Joined), /*ErrorIfNotFound=*/false);
+	Rebuild();
+}
+
+void ULibraryCategoryWidget::SplitTag(const FGameplayTag& Tag, TArray<FString>& OutParts)
+{
+	OutParts.Reset();
+	if (!Tag.IsValid()) return;
+	Tag.ToString().ParseIntoArray(OutParts, TEXT("."), /*CullEmpty=*/true);
+}
+
+FGameplayTag ULibraryCategoryWidget::MakePartialTag(const TArray<FString>& Parts, int32 UpToIdx)
+{
+	FString S;
+	for (int32 i=0; i<=UpToIdx && i<Parts.Num(); ++i)
+	{
+		if (i > 0) S += TEXT(".");
+		S += Parts[i];
+	}
+	return FGameplayTag::RequestGameplayTag(FName(*S), /*ErrorIfNotFound=*/false);
+}
+
+
+void ULibraryCategoryWidget::Rebuild()
+{
+	if (!BreadcrumbBox) return;
+
+	BreadcrumbBox->ClearChildren();
+	Buttons.Empty();
+
+	// 태그를 파츠로 분해
+	TArray<FString> Parts;
+	SplitTag(CurrentTag, Parts);
+	if (Parts.Num() == 0) return;
+
+	const int32 Last = Parts.Num() - 1;
+	for (int32 i=0; i<Parts.Num(); ++i)
+	{
+		const bool bActive = (i == Last);
+		const FGameplayTag Partial = MakePartialTag(Parts, i);
+
+		AddCrumb(Partial, Parts[i], bActive);
+
+		// 마지막이 아니면 구분자 넣기
+		if (i != Last)
+		{
+			UTextBlock* Sep = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+			FSlateFontInfo Info = Sep->Font; // 또는 Sep->GetFont() (버전에 따라)
+			Info.Size = 12.f;
+			Sep->SetFont(Info);
+			Sep->SetText(FText::FromString(SeparatorSymbol));
+			Sep->SetColorAndOpacity(FSlateColor(SeparatorColor));
+			BreadcrumbBox->AddChildToHorizontalBox(Sep);
+		}
+	}
+}
+
+
+void ULibraryCategoryWidget::AddCrumb(const FGameplayTag& Tag, const FString& Title, bool bActive)
+{
+	if (!CategoryBtnClass) return;
+	
+	UCategoryButton* Btn = WidgetTree->ConstructWidget<UCategoryButton>(CategoryBtnClass);
+	Btn->CategoryTag = Tag;
+	Btn->SetText(FText::FromString(Title));
+	Btn->SetActive(bActive);
+
+	BreadcrumbBox->AddChildToHorizontalBox(Btn);
+	Btn->OnCategoryClicked.AddDynamic(this, &ULibraryCategoryWidget::HandleCrumbClicked);
+}
+
+void ULibraryCategoryWidget::HandleCrumbClicked(FGameplayTag Tag)
+{
+	// 외부 알림
+	OnCrumbChosen.Broadcast(Tag);
+
+	// 현재 경로를 선택된 태그로 갱신
+	SetFromTag(Tag);
+}

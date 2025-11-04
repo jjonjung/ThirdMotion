@@ -1,0 +1,118 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UI/Widget/BaseWidget.h"
+#include "Components/Button.h"
+#include "BottomBar.generated.h"
+
+class UBottomController;
+class URightPanel;
+class ULibraryPanel;
+
+/**
+ * Bottom Bar - Contains buttons for switching panels
+ */
+UCLASS()
+class THIRDMOTION_API UBottomBar : public UBaseWidget
+{
+	GENERATED_BODY()
+
+public:
+	virtual void NativeConstruct() override;
+
+	// BottomController 초기화 (RightPanel 참조 필요)
+	UFUNCTION(BlueprintCallable, Category = "Bottom Bar")
+	void InitializeWithRightPanel(URightPanel* InRightPanel);
+
+	// LibraryPanel 초기화
+	UFUNCTION(BlueprintCallable, Category = "Bottom Bar")
+	void InitializeWithLibraryPanel(ULibraryPanel* InLibraryPanel);
+
+	// BottomView 초기화
+	UFUNCTION(BlueprintCallable, Category = "Bottom Bar")
+	void InitializeWithBottomView(class UBottomView* InBottomView);
+
+	// BottomController 접근자
+	UFUNCTION(BlueprintCallable, Category = "Bottom Bar")
+	UBottomController* GetBottomController() const { return BottomController; }
+
+	// Widget Components - RightPanel 관련
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	UButton* LibraryButton;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	UButton* SceneButton;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	UButton* PropertiesButton;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	UButton* UserListButton;
+
+	// Widget Components - BottomView 관련
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	UButton* MaterialButton;
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
+	UButton* MemoButton;
+
+	// Events for panel switching
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLibraryButtonClicked);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSceneButtonClicked);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPropertiesButtonClicked);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUserListButtonClicked);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMaterialButtonClicked);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMemoButtonClicked);
+
+	UPROPERTY(BlueprintAssignable, Category = "BottomBar Events")
+	FOnLibraryButtonClicked OnLibraryButtonClicked;
+
+	UPROPERTY(BlueprintAssignable, Category = "BottomBar Events")
+	FOnSceneButtonClicked OnSceneButtonClicked;
+
+	UPROPERTY(BlueprintAssignable, Category = "BottomBar Events")
+	FOnPropertiesButtonClicked OnPropertiesButtonClicked;
+
+	UPROPERTY(BlueprintAssignable, Category = "BottomBar Events")
+	FOnUserListButtonClicked OnUserListButtonClicked;
+
+	UPROPERTY(BlueprintAssignable, Category = "BottomBar Events")
+	FOnMaterialButtonClicked OnMaterialButtonClicked;
+
+	UPROPERTY(BlueprintAssignable, Category = "BottomBar Events")
+	FOnMemoButtonClicked OnMemoButtonClicked;
+
+protected:
+	// Button click handlers
+	UFUNCTION()
+	void OnLibraryClicked();
+
+	UFUNCTION()
+	void OnSceneClicked();
+
+	UFUNCTION()
+	void OnPropertiesClicked();
+
+	UFUNCTION()
+	void OnUserListClicked();
+
+	UFUNCTION()
+	void OnMaterialClicked();
+
+	UFUNCTION()
+	void OnMemoClicked();
+
+private:
+	// BottomController (패널 전환 로직 관리)
+	UPROPERTY()
+	UBottomController* BottomController;
+
+	// LibraryPanel 참조
+	UPROPERTY()
+	ULibraryPanel* LibraryPanel;
+
+	// LibraryPanel 표시 상태
+	bool bIsLibraryPanelVisible;
+};
