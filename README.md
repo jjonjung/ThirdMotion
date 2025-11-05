@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # ThirdMotion
 ## ✓ Project Overview
 <div align="center">
