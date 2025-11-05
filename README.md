@@ -370,6 +370,3 @@ Source/ThirdMotion/
 Made with Unreal Engine 5.6
 
 </div>
-=======
-# ThirdMotion
->>>>>>> d50c9b3 (Initial commit)
